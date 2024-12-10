@@ -17,6 +17,7 @@ public class Ticketpool {
 
     public synchronized void addTicket(Ticket ticket) {
         System.out.println("start add ticket process: ");
+        System.out.flush();
         if (System.currentTimeMillis() - lastAddedTime < ticketReleaseRate) {
             try {
                 Thread.sleep(System.currentTimeMillis() - lastAddedTime);
@@ -27,31 +28,40 @@ public class Ticketpool {
         while (isActive) {
             try {
                 System.out.println(Thread.currentThread().getName() + "waiting");
+                System.out.flush();
                 wait();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
-        tickets.offer(ticket);
-        lastAddedTime = System.currentTimeMillis();
-        isActive = true;
-        System.out.println(Thread.currentThread().getName() + ":added:" + ticket);
+        if (Main.isRunning) {
+            tickets.offer(ticket);
+            lastAddedTime = System.currentTimeMillis();
+            isActive = true;
+            System.out.println(Thread.currentThread().getName() + ":added:" + ticket);
+            System.out.flush();
+        }
         notifyAll();
     }
 
     public synchronized void buyTicket() {
         System.out.println("start buy ticket process");
+        System.out.flush();
         while (!isActive || tickets.isEmpty()) {
             try {
                 System.out.println(Thread.currentThread().getName() + "waiting");
+                System.out.flush();
                 wait();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
         }
-        tickets.poll();
-        isActive = false;
-        System.out.println(Thread.currentThread().getName() + ":bought ticket");
+        if (Main.isRunning) {
+            tickets.poll();
+            isActive = false;
+            System.out.println(Thread.currentThread().getName() + ":bought ticket");
+            System.out.flush();
+        }
         notifyAll();
     }
 }

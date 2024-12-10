@@ -1,7 +1,9 @@
+import java.io.IOException;
 import java.util.InputMismatchException;
 import java.util.Scanner;
 
 public class Main {
+    public static boolean isRunning = true;
     public static void main(String[] args) {
         int totalTickets = 0;
         int ticketReleaseRate = 0;
@@ -11,7 +13,18 @@ public class Main {
         String currentField = "totalTickets";
 
         Scanner scan = new Scanner(System.in);
+
         System.out.println("System started");
+        while (true) {
+            System.out.println("Enter start to start the simulation: ");
+            String userin = scan.nextLine();
+            if ("start".equalsIgnoreCase(userin.trim())) {
+                System.out.println("starting the simultaion: ");
+                break;
+            } else {
+                System.out.println("Invalid input, please input a valid value.");
+            }
+        }
         System.out.println("Start setting configuration: ");
         while (!isConfigComplete) {
             try {
@@ -57,9 +70,33 @@ public class Main {
                 System.out.println("Please provide a integer value");
             }
         }
-        System.out.println("Configuration started");
+
+        //setup thread to listen for stop
+        Thread listener = new Thread(() -> {
+            try (Scanner inputScanner = new Scanner(System.in)) {
+                System.out.println("Enter 's' to stop the program at any time.");
+                while (true) {
+                    if (inputScanner.hasNextLine()) {
+                        String userInput = inputScanner.nextLine().trim();
+                        if ("s".equalsIgnoreCase(userInput)) {
+                            System.out.println("Stopping system, exiting the program...");
+                            System.out.println("program stopped");
+                            System.exit(0);
+                            Main.isRunning = false;
+                        }
+                    }
+                }
+            }
+        });
+        listener.setDaemon(true);
+        listener.start();
+
         Configuration config = new Configuration(totalTickets, ticketReleaseRate, customerRetrievalRate, maxTicketCapacity);
         Ticketpool ticketpool = new Ticketpool(maxTicketCapacity, ticketReleaseRate);
+        System.out.println("Configuration started: " + config);
+        System.out.flush();
+        System.out.println("Ticketpool started: " + ticketpool);
+        System.out.flush();
 
         //add vendors
         for (int i = 0; i < 5; i++) {
